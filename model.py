@@ -12,27 +12,42 @@ import numpy as np
 from keras.models import save_model, load_model
 from keras import backend as K
 from keras import Model
-
+from sklearn.utils import shuffle
 
 class Classifier:
-    def __init__(self, predict=False):
+    def __init__(self):
         self.config = Config()
         self.du = DataUtil()
-        self.raw_sent, self.data, self.raw_labels, self.class_dict = self.du.load_training_set()
-        self.classes = self.du.convert_raw_label_to_class(self.raw_labels, self.class_dict)
-        self.labels = keras.utils.to_categorical(self.classes, self.du.config.n_classes)
+        self.inv_map = {v: k for k, v in self.config.class_dict.iteritems()}
 
-        if predict:
-            self.config.dropout = 0
-            self.model = load_model(self.config.dl_model_path)
-            self.generate_prediction_results()
-        else:
-            self.model = self.build_model()
-            self.model.compile(loss=keras.losses.categorical_crossentropy,
-                               optimizer=keras.optimizers.RMSprop(decay=3e-5, lr=self.config.lr),
-                               metrics=['accuracy'])
-            self.train()
-            self.evaluate()
+        # if predict:
+        #     self.config.dropout = 0
+        #     self.model = load_model(self.config.dl_model_path)
+        #     self.generate_prediction_results()
+        # else:
+
+    def run_trainer(self):
+        self.raw_sent, self.data, self.raw_labels, _ = self.du.load_training_set()
+        self.raw_sent, self.data, self.raw_labels = shuffle(self.raw_sent, self.data, self.raw_labels)
+        self.classes = self.du.convert_raw_label_to_class(self.raw_labels, self.config.class_dict)
+        self.labels = keras.utils.to_categorical(self.classes, self.du.config.n_classes)
+        self.model = self.build_model()
+        self.model.compile(loss=keras.losses.categorical_crossentropy,
+                           optimizer=keras.optimizers.RMSprop(lr=self.config.lr),
+                           metrics=['accuracy'])
+        self.train()
+        self.evaluate()
+
+    def run_prediction(self, sentence):
+        emb_sent = self.du.prepare_predict_data(sentence)
+        emb_sent = emb_sent.reshape([1,self.config.max_sent_len, self.config.emb_dim])
+        self.config.dropout = 0
+        self.model = load_model(self.config.dl_model_path)
+        pred, prob = self.predict(emb_sent)
+        pred = pred[0]
+        prob = prob[0]
+        response = self.inv_map[pred]
+        return response, prob
 
     def build_model(self):
         input = Input(shape=(self.config.max_sent_len, self.config.emb_dim))
@@ -45,17 +60,17 @@ class Classifier:
     def train(self):
 
         check = keras.callbacks.ModelCheckpoint(self.du.config.dl_model_path, monitor='val_loss', verbose=1,
-                                                save_best_only=False, save_weights_only=False, mode='auto', period=1)
+                                                save_best_only=True, save_weights_only=False, mode='auto', period=1)
         self.model.fit(self.data, self.labels,
                   batch_size=self.du.config.batch_size,
                   epochs=self.du.config.epochs,
                   verbose=1,
-                  validation_split=0.2, callbacks=[check])
+                  validation_split=0.1, callbacks=[check])
 
     def predict(self, test_data):
-        predictions = self.model.predict(test_data)
-        predictions = np.argmax(predictions, axis=-1)
-        return predictions
+        probs = self.model.predict(test_data)
+        predictions = np.argmax(probs, axis=-1)
+        return predictions, probs
 
     def evaluate(self):
         self.config.dropout = 0
@@ -66,18 +81,18 @@ class Classifier:
 
     def generate_prediction_results(self):
         with open(self.config.result_path, 'w') as f:
-            predictions = self.model.predict(self.data)
+            predictions, _ = self.model.predict(self.data)
             predictions = np.argmax(predictions, axis=-1)
-            inv_map = {v: k for k, v in self.class_dict.iteritems()}
             for i in range(len(predictions)):
                 sent = self.raw_sent[i]
                 ground_truth = self.raw_labels[i]
-                pred = inv_map[predictions[i]]
+                pred = self.inv_map[predictions[i]]
                 res = '\t'.join([sent, ground_truth, pred]) + '\n'
                 f.write(res)
         print "file written"
 
 
 if __name__ == '__main__':
-    model = Classifier(predict=False)
+    model = Classifier()
+    model.run_trainer()
 

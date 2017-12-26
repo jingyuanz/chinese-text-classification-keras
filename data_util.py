@@ -97,21 +97,36 @@ class DataUtil:
                 sent, label = content[0], content[1]
                 raw_sents.append(sent)
                 tokens = jieba.cut(sent, cut_all=False)
-                emb = self.encode_seq(tokens)
+                tokens = list(tokens)
+                nopunc_tokens = self.preprocess_sent(tokens)
+                emb = self.encode_seq(nopunc_tokens)
                 # emb = np.reshape(emb, (self.config.max_sent_len, self.config.emb_dim,1))
                 # emb = np.reshape(emb, (self.config.emb_dim, 1))
                 data.append(emb)
                 labels.append(label)
                 label_set.add(label)
         num_class = len(label_set)
-        class_dict = {}
-        for i in range(num_class):
-            l = label_set.pop()
-            class_dict[l] = i
+        class_dict = self.config.class_dict
+        # for i in range(num_class):
+        #     l = label_set.pop()
+        #     class_dict[l] = i
+        # for val, key in class_dict.items():
+        #     print val, key
+        # import sys
+        # sys.exit(0)
         return raw_sents, np.array(data), labels, class_dict
+
+    def prepare_predict_data(self, raw_sent):
+        sent = raw_sent.strip()
+        tokens = list(jieba.cut(sent, cut_all=False))
+        nopunc = self.preprocess_sent(tokens)
+        emb = self.encode_seq(nopunc)
+        return emb
 
     def convert_raw_label_to_class(self, labels, cdict):
         return [cdict[label] for label in labels]
 
 
+    def preprocess_sent(self, sent):
+        return [c for c in sent if c not in self.config.punc]
 
