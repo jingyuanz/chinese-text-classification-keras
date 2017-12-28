@@ -84,8 +84,12 @@ class DataUtil:
             vocab_dict[w] = vec
         return vocab_dict
 
-    def load_training_set(self):
-        with open(self.config.corpus_path) as f:
+    def load_data_set(self, type='train'):
+        if type == 'test':
+            path = self.config.test_corpus_path
+        else:
+            path = self.config.train_corpus_path
+        with open(path) as f:
             lines = f.readlines()
             data = []
             labels = []
@@ -105,16 +109,9 @@ class DataUtil:
                 data.append(emb)
                 labels.append(label)
                 label_set.add(label)
-        num_class = len(label_set)
-        class_dict = self.config.class_dict
-        # for i in range(num_class):
-        #     l = label_set.pop()
-        #     class_dict[l] = i
-        # for val, key in class_dict.items():
-        #     print val, key
-        # import sys
-        # sys.exit(0)
-        return raw_sents, np.array(data), labels, class_dict
+        return raw_sents, np.array(data), labels
+
+
 
     def prepare_predict_data(self, raw_sent):
         sent = raw_sent.strip()
@@ -128,5 +125,6 @@ class DataUtil:
 
 
     def preprocess_sent(self, sent):
-        return [c for c in sent if c not in self.config.punc]
+        return [c for c in sent if c not in self.config.punc and not c.isdigit() and c not in self.config.freq_words]
+
 

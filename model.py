@@ -13,6 +13,8 @@ from keras.models import save_model, load_model
 from keras import backend as K
 from keras import Model
 from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
+
 
 class Classifier:
     def __init__(self):
@@ -20,17 +22,21 @@ class Classifier:
         self.du = DataUtil()
         self.inv_map = {v: k for k, v in self.config.class_dict.iteritems()}
 
-        # if predict:
-        #     self.config.dropout = 0
-        #     self.model = load_model(self.config.dl_model_path)
-        #     self.generate_prediction_results()
-        # else:
-
     def run_trainer(self):
-        self.raw_sent, self.data, self.raw_labels, _ = self.du.load_training_set()
+        #load train set
+        self.raw_sent, self.data, self.raw_labels = self.du.load_data_set()
+        #load test set
+        self.test_sent, self.test_data, self.test_raw_labels = self.du.load_data_set('test')
+        #shuffle train set
         self.raw_sent, self.data, self.raw_labels = shuffle(self.raw_sent, self.data, self.raw_labels)
+        #train/test classes in integer
         self.classes = self.du.convert_raw_label_to_class(self.raw_labels, self.config.class_dict)
+        self.test_classes = self.du.convert_raw_label_to_class(self.test_raw_labels, self.config.class_dict)
+        #convert to one hot catagory
+        self.test_labels = keras.utils.to_categorical(self.test_classes, self.du.config.n_classes)
         self.labels = keras.utils.to_categorical(self.classes, self.du.config.n_classes)
+
+        #compile model
         self.model = self.build_model()
         self.model.compile(loss=keras.losses.categorical_crossentropy,
                            optimizer=keras.optimizers.RMSprop(lr=self.config.lr),
@@ -53,7 +59,11 @@ class Classifier:
         input = Input(shape=(self.config.max_sent_len, self.config.emb_dim))
         conv_output = Conv1D(self.config.n_filter, kernel_size=self.config.filter_size, strides=1, activation="relu")(input)
         lstm_output = LSTM(self.config.lstm_dim, dropout=self.config.dropout)(conv_output)
+        # hidden1_output = Dense(self.config.h1_dim, activity_regularizer=l2(self.config.l2_rate), activation='relu')(lstm_output)
+        # drop_hidden = Dropout(self.config.dropout)(hidden1_output)
+        # out = Dense(self.config.n_classes, activity_regularizer=l2(self.config.l2_rate), activation="softmax")(drop_hidden)
         out = Dense(self.config.n_classes, activity_regularizer=l2(self.config.l2_rate), activation="softmax")(lstm_output)
+
         model = Model(inputs=[input], outputs=[out])
         return model
 
@@ -73,11 +83,20 @@ class Classifier:
         return predictions, probs
 
     def evaluate(self):
-        self.config.dropout = 0
-        predictions = self.predict(self.data)
-        comparison = (predictions == self.classes)
-        acc = np.mean(comparison)
-        print "total accuracy: ", acc
+        # self.config.dropout = 0
+        # predictions, _ = self.predict(self.data)
+        # comparison = (predictions == self.classes)
+        # acc = np.mean(comparison)
+        print self.model.evaluate(self.test_data, self.test_labels)
+
+    def evaluate_on_model(self, model_path):
+        self.test_sent, self.test_data, self.test_raw_labels = self.du.load_data_set('test')
+        self.test_classes = self.du.convert_raw_label_to_class(self.test_raw_labels, self.config.class_dict)
+        self.test_labels = keras.utils.to_categorical(self.test_classes, self.du.config.n_classes)
+
+        self.model = load_model(model_path)
+        print self.model.evaluate(self.test_data, self.test_labels)
+
 
     def generate_prediction_results(self):
         with open(self.config.result_path, 'w') as f:
@@ -94,5 +113,6 @@ class Classifier:
 
 if __name__ == '__main__':
     model = Classifier()
-    model.run_trainer()
+    # model.run_trainer()
+    model.evaluate_on_model(Config().dl_model_path)
 
