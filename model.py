@@ -43,6 +43,7 @@ class Classifier:
                            metrics=['accuracy'])
         self.train()
         self.evaluate()
+        self.model.save(self.config.final_round_model_path)
 
     def run_prediction(self, sentence):
         emb_sent = self.du.prepare_predict_data(sentence)
@@ -69,7 +70,7 @@ class Classifier:
 
     def train(self):
 
-        check = keras.callbacks.ModelCheckpoint(self.du.config.dl_model_path, monitor='val_loss', verbose=1,
+        check = keras.callbacks.ModelCheckpoint(self.du.config.dl_model_path, monitor='val_acc', verbose=1,
                                                 save_best_only=True, save_weights_only=False, mode='auto', period=1)
         self.model.fit(self.data, self.labels,
                   batch_size=self.du.config.batch_size,
@@ -88,6 +89,7 @@ class Classifier:
         # comparison = (predictions == self.classes)
         # acc = np.mean(comparison)
         print self.model.evaluate(self.test_data, self.test_labels)
+        self.generate_prediction_results(self.test_data, self.test_raw_labels, self.test_sent)
 
     def evaluate_on_model(self, model_path):
         self.test_sent, self.test_data, self.test_raw_labels = self.du.load_data_set('test')
@@ -96,15 +98,17 @@ class Classifier:
 
         self.model = load_model(model_path)
         print self.model.evaluate(self.test_data, self.test_labels)
+        self.generate_prediction_results(self.test_data, self.test_raw_labels, self.test_sent)
 
 
-    def generate_prediction_results(self):
+
+    def generate_prediction_results(self, data, raw_labels, raw_sents):
         with open(self.config.result_path, 'w') as f:
-            predictions, _ = self.model.predict(self.data)
+            predictions = self.model.predict(data)
             predictions = np.argmax(predictions, axis=-1)
             for i in range(len(predictions)):
-                sent = self.raw_sent[i]
-                ground_truth = self.raw_labels[i]
+                sent = raw_sents[i]
+                ground_truth = raw_labels[i]
                 pred = self.inv_map[predictions[i]]
                 res = '\t'.join([sent, ground_truth, pred]) + '\n'
                 f.write(res)
