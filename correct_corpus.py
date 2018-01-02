@@ -25,6 +25,10 @@ with open(config.corpus_path) as f:
         elif label == '查询积分':
             label = '积分查询'
             print 6
+        elif label == '挂失停机':
+            label = '挂失'
+        elif label == '月度积分查询':
+            label = '积分查询'
         new_line = '\t'.join([query, label]) + '\n'
         new_lines.append(new_line)
 

@@ -3,6 +3,7 @@ class Config:
     def __init__(self):
         self.emb_dim = 200
         self.corpus_path = 'data/corpus.txt'
+        self.xls_corpus_path = 'data/sup_corpus.txt'
         self.train_corpus_path = 'data/train.txt'
         self.test_corpus_path = 'data/test.txt'
         self.model_path = 'data/chinese.model'
@@ -38,6 +39,19 @@ class Config:
                            '家庭礼包': 10,
                            '改密码': 11,
                            '挂失': 12,
+                           '宽带到期时间查询':13,
+                           '路由器设置不成功':14,
+                           'ITV障碍报修':15,
+                           '人工服务':16,
+                           '宽带密码修改':17,
+                           '宽带账号查询':18,
+                           '信用额度查询':19,
+                           '宽带维修进度查询':20,
+                           '复机业务':21,
+                           '装宽带':22,
+                           '装移机进度查询':23,
+                           '翼支付客服电话':24,
+                           '呼叫转移':25,
                            }
-        # self.freq_words = ['我', '的', '我要', '了', '吗', '想', '你', '你们', '吧', '呢', '啊']
-        self.freq_words = []
+        self.freq_words = ['的', '了', '吗', '吧', '呢', '啊']
+        # self.freq_words = []
