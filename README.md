@@ -5,3 +5,4 @@ An implementation and application of the paper "A C-LSTM Neural Network for Text
 Achieved 98.3% accuracy (93.6% on test data)
 
  - data and model not uploaded for confidentiality purpose
+ - add api script for easy backend connection, adding more classes and tranining data
