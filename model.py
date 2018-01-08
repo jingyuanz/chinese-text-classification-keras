@@ -33,7 +33,6 @@ class Classifier:
         self.classes = self.du.convert_raw_label_to_class(self.raw_labels, self.config.class_dict)
         self.test_classes = self.du.convert_raw_label_to_class(self.test_raw_labels, self.config.class_dict)
         #convert to one hot catagory
-        print self.test_classes, len(self.test_classes)
         self.test_labels = keras.utils.to_categorical(self.test_classes, self.du.config.n_classes)
         self.labels = keras.utils.to_categorical(self.classes, self.du.config.n_classes)
 
@@ -52,6 +51,7 @@ class Classifier:
         self.config.dropout = 0
         self.model = load_model(self.config.dl_model_path)
         pred, prob = self.predict(emb_sent)
+        print pred
         pred = pred[0]
         prob = prob[0]
         response = self.inv_map[pred]
@@ -104,6 +104,7 @@ class Classifier:
         with open(self.config.result_path, 'w') as f:
             predictions = self.model.predict(data)
             predictions = np.argmax(predictions, axis=-1)
+            '''argsort'''
             for i in range(len(predictions)):
                 sent = raw_sents[i]
                 ground_truth = raw_labels[i]

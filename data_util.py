@@ -34,11 +34,39 @@ class DataUtil:
         print model['</s>'].shape
         return model
 
+    def correct_tokens(self, tokens):
+        new_tokens = tokens
+        for i in range(len(tokens)):
+            token = tokens[i]
+            if token == u'我想查' or token == u'帮查':
+                new_tokens[i] = u'查'
+            elif token == u'IPHONE8':
+                new_tokens[i] = u'手机'
+            elif token == u'日租卡':
+                new_tokens[i] = u'日租'
+            elif token in [u'我本机', u'帮本机', u'查本机', u'改本机']:
+                new_tokens[i] = u'本机'
+            elif token == u'他机':
+                new_tokens[i] = u'别人'
+            elif token == u'我想装':
+                new_tokens[i] = u'装'
+            elif token == u'积量':
+                new_tokens[i] = u'流量'
+            elif token == u'办停':
+                new_tokens[i] = u'停机'
+        assert len(new_tokens) == len(tokens)
+        return new_tokens
+
     def encode_seq(self, seq):
         if not self.w2v_model:
             return np.zeros((self.config.max_sent_len, self.config.emb_dim))
         seq = list(seq)
-        embs = [self.w2v_model[word] for word in seq if word and word in self.w2v_model]
+        seq = self.correct_tokens(seq)
+        filtered_seq = [w for w in seq if w and w in self.w2v_model]
+        embs = [self.w2v_model[word] for word in filtered_seq]
+        diff = set(seq) - set(filtered_seq)
+        for w in diff:
+            print w
         len_diff = self.config.max_sent_len - len(embs)
         padding = [0.0] * self.config.emb_dim
         embs.extend(len_diff * [padding])
@@ -122,10 +150,10 @@ class DataUtil:
         return emb
 
     def convert_raw_label_to_class(self, labels, cdict):
-        c = 0
-        for label in labels:
-            c += 1
-            print cdict[label], c
+        # c = 0
+        # for label in labels:
+        #     c += 1
+        #     print cdict[label], c
         return [cdict[label] for label in labels]
 
 
