@@ -14,3 +14,5 @@ with open(Config().corpus_path) as f:
 results = list(sorted(freq_dict.items(), key=lambda x:x[1], reverse=True))[:50]
 for k,v in results:
     print k, v
+
+

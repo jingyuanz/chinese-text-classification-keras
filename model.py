@@ -33,6 +33,7 @@ class Classifier:
         self.classes = self.du.convert_raw_label_to_class(self.raw_labels, self.config.class_dict)
         self.test_classes = self.du.convert_raw_label_to_class(self.test_raw_labels, self.config.class_dict)
         #convert to one hot catagory
+        print self.test_classes, len(self.test_classes)
         self.test_labels = keras.utils.to_categorical(self.test_classes, self.du.config.n_classes)
         self.labels = keras.utils.to_categorical(self.classes, self.du.config.n_classes)
 
@@ -60,9 +61,6 @@ class Classifier:
         input = Input(shape=(self.config.max_sent_len, self.config.emb_dim))
         conv_output = Conv1D(self.config.n_filter, kernel_size=self.config.filter_size, strides=1, activation="relu")(input)
         lstm_output = LSTM(self.config.lstm_dim, dropout=self.config.dropout)(conv_output)
-        # hidden1_output = Dense(self.config.h1_dim, activity_regularizer=l2(self.config.l2_rate), activation='relu')(lstm_output)
-        # drop_hidden = Dropout(self.config.dropout)(hidden1_output)
-        # out = Dense(self.config.n_classes, activity_regularizer=l2(self.config.l2_rate), activation="softmax")(drop_hidden)
         out = Dense(self.config.n_classes, activity_regularizer=l2(self.config.l2_rate), activation="softmax")(lstm_output)
 
         model = Model(inputs=[input], outputs=[out])
@@ -118,5 +116,5 @@ class Classifier:
 if __name__ == '__main__':
     model = Classifier()
     # model.run_trainer()
+    # model.evaluate_on_model(Config().final_round_model_path)
     model.evaluate_on_model(Config().dl_model_path)
-

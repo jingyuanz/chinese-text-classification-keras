@@ -1,3 +1,4 @@
+#coding=utf-8
 import pickle
 import numpy as np
 from config import Config
@@ -121,11 +122,15 @@ class DataUtil:
         return emb
 
     def convert_raw_label_to_class(self, labels, cdict):
-
+        c = 0
+        for label in labels:
+            c += 1
+            print cdict[label], c
         return [cdict[label] for label in labels]
 
 
     def preprocess_sent(self, sent):
-        return [c for c in sent if c not in self.config.punc and not c.isdigit() and c not in self.config.freq_words]
+        processed = [c for c in sent if c not in self.config.punc and not c.isdigit() and c not in self.config.freq_words]
+        return processed
 
 
