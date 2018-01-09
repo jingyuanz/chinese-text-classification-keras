@@ -105,6 +105,7 @@ class Classifier:
             predictions = self.model.predict(data)
             predictions = np.argmax(predictions, axis=-1)
             '''argsort'''
+            # top_n = predictions.argsort(axis=-1, order=)
             for i in range(len(predictions)):
                 sent = raw_sents[i]
                 ground_truth = raw_labels[i]

@@ -38,6 +38,7 @@ class DataUtil:
         new_tokens = tokens
         for i in range(len(tokens)):
             token = tokens[i]
+            token = token.replace(u'我想', u'').replace(u'我要', u'').replace(u'我', u'')
             if token == u'我想查' or token == u'帮查':
                 new_tokens[i] = u'查'
             elif token == u'IPHONE8':
@@ -54,7 +55,10 @@ class DataUtil:
                 new_tokens[i] = u'流量'
             elif token == u'办停':
                 new_tokens[i] = u'停机'
+            else:
+                new_tokens[i] = token
         assert len(new_tokens) == len(tokens)
+        print ' '.join(new_tokens)
         return new_tokens
 
     def encode_seq(self, seq):

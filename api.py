@@ -29,9 +29,14 @@ class API:
             self.model.config.corpus_path = new_model_save_path
         self.model.train()
 
+    def run(self):
+        while True:
+            sent = raw_input(">> input query:")
+            self.predict_sentence(sent)
+
 
 if __name__ == '__main__':
     api = API()
-    api.predict_sentence(u"我想查话费行不行")
-    api.predict_sentence(u"我不想用现在的套餐了")
+    # api.predict_sentence(u"我的路由器坏了")
     #api.train_corpus()
+    api.run()
